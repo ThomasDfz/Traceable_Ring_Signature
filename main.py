@@ -67,7 +67,7 @@ def Sign(message, issue, publicKeys, user, G, g):
     ## c ##
     c_solo = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
 
-    ## d : Il faut en fait faire un tableau pour calculer tous les Ci, et les Zi et non pas un seul Ci, Zi
+    ## d ##
     sum = 0
     for j in range(0, n):
         if(j != user.id):
@@ -77,13 +77,48 @@ def Sign(message, issue, publicKeys, user, G, g):
 
     return [A_1, c, z]
 
-def Verify(issue, publicKeys, message, signature, G, g):
+
+
+def Verify(issue, publicKeys, message, signature, G, g, userArray):
     A_1, c, z = signature
+    n = len(publicKeys)
 
     ## etape 1 ##
-    #checker que g et A_1 appartiennent à G
 
+    if(g not in G or A_1 not in G):
+        return False
 
+    Zq = list(range(0, q-1))  #Liste des Z/Zq
+
+    for i in range(0, n):
+        if(c[i] not in Zq or z[i] not in Zq):
+            return False
+        if(userArray[i].y not in G):
+            return False
+
+    hashed = miscellaneous.Hash(issue, publicKeys, g, p, q)
+    A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message)
+    sigma = [None]*n
+    for i in range(0, n):
+        sigma[i] = A_0*pow(A_1, i)
+
+    ## etape 2 ##
+
+    a, b = [None]*n, [None]*n
+    for i in range(0, n):
+        a[i] = pow(g, z[i]) * pow(userArray[i].y, c[i])
+        b[i] = pow(hashed, z[i]) * pow(sigma[i], c[i])
+
+    ## etape 3 ##
+
+    sum = 0
+    for i in range(0, n):
+        sum = sum + c[i]
+    if(abs(miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b) - sum)%q != 0):
+        return False
+
+    ## etape 4 ##
+    return True
 
 def main():
     ######## test ########
@@ -96,6 +131,6 @@ def main():
     ring, userArray = Ring.myCreateRing(userNumber, g, G, q)
 
     signature = Sign(message, issue, ring.pKeys, userArray[id], G, g)
-    Verify(issue, ring.pKeys, message, signature, G, g)
+    Verify(issue, ring.pKeys, message, signature, G, g, userArray)
 
 main()
