@@ -120,6 +120,41 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
     ## etape 4 ##
     return True
 
+def Trace(issue, publicKeys, g, G, message, signature, messageb, signatureb):
+    A_1, c, z = signature
+    A_1b, cb, zb = signatureb
+    n = len(publicKeys)
+
+    ## etape 1 ##
+    hashed = miscellaneous.Hash(issue, publicKeys, g, p, q)
+    A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message)
+    A_0b = miscellaneous.HashPrime(issue, publicKeys, g, p, q, messageb)
+
+    sigma = [None] * n
+    sigmab = [None] * n
+    for i in range(0, n):
+        sigma[i] = pow(A_0 * pow(A_1, i), 1, p)
+        sigmab[i] = pow(A_0b * pow(A_1b, i), 1, p)
+
+    ## etape 2 ##
+
+    TList = []
+    for i in range(0, n):
+        if(sigma[i] == sigmab[i]):
+            TList.append(publicKeys[i])
+
+    ## etape 3 ##
+
+    if(len(TList) == 1):
+        return TList[0]
+    elif(len(TList) == n):
+        return "linked"
+    else:
+        return "indep"
+
+
+
+
 def main():
     ######## test ########
     message = "all your base are belong to us"
@@ -131,6 +166,9 @@ def main():
     ring, userArray = Ring.myCreateRing(userNumber, g, G, q)
 
     signature = Sign(message, issue, ring.pKeys, userArray[id], G, g)
-    Verify(issue, ring.pKeys, message, signature, G, g, userArray)
+
+    print(Verify(issue, ring.pKeys, message, signature, G, g, userArray))
+
+
 
 main()
