@@ -2,7 +2,7 @@ import miscellaneous
 import Ring
 from random import randint
 
-q = 29     #Sophie Germain prime number
+q = 5     #Sophie Germain prime number
 p = 2*q+1   #prime too
 
 def buildG():
@@ -22,8 +22,9 @@ def buildG():
     generators = sorted(generators)
     G = []
     g = generators[1]
-    for qi in range(0, q-1):
+    for qi in range(0, q):
         G.append(pow(g, qi, p))
+    print(G)
     return G, g
 
 def Sign(message, issue, publicKeys, user, G, g):
@@ -34,13 +35,18 @@ def Sign(message, issue, publicKeys, user, G, g):
     ####  etape 1  ####
 
     sigma = [None] * n
-    hashed = miscellaneous.Hash(issue, publicKeys, g, p, q)
-    sigma[i] = pow(hashed, user.x)
+    hashed = miscellaneous.Hash(issue, publicKeys, g, p, q) #ok
+
+    sigma[i] = pow(hashed, user.x, q) #mod q ?
 
     ####  etape 2  ####
 
-    A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message)
-    A_1 = pow(sigma[i]/A_0, 1/(i))
+    A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message) #ok aussi
+
+    A_1 = pow(pow(sigma[i] * pow(A_0, p-2 , p), 1, p), pow(i, p-2 , p), p)
+    #A_1 = pow(A_0, q-1, p)
+
+    print(A_1)
 
     ####  etape 3  ####
 
@@ -52,7 +58,7 @@ def Sign(message, issue, publicKeys, user, G, g):
     ## a ##
     w_i = randint(0, q-1)
     a, b = [None] * n, [None] * n
-    a[i] = pow(g, w_i, p)  #pas sûr que ça soit modulo p
+    a[i] = pow(g, w_i, p)
     b[i] = pow(hashed, w_i, p)
 
     ## b ##
@@ -61,7 +67,7 @@ def Sign(message, issue, publicKeys, user, G, g):
         if(j != id):
             z[j] = randint(0, q-1)
             c[j] = randint(0, q-1)
-            a[j] = divmod(pow(g, z[j], p) * pow(user.y, c[j], p), p)[1] #pas sûr que ça soit modulo p
+            a[j] = divmod(pow(g, z[j], p) * pow(user.y, c[j], p), p)[1]
             b[j] = divmod(pow(hashed, z[j], p) * pow(int(sigma[j]), c[j], p), p)[1] #enlever le int(sigma) quand pb resolu
 
     ## c ##
