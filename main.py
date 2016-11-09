@@ -2,7 +2,7 @@ import miscellaneous
 import Ring
 from random import randint
 
-q = 5     #Sophie Germain prime number
+q = 11     #Sophie Germain prime number
 p = 2*q+1   #prime too
 
 def buildG():
@@ -19,11 +19,12 @@ def buildG():
     coprimeList = miscellaneous.findCoprimeList(p-1)
     for qi in coprimeList:
         generators.append(pow(x, qi, p))
-    generators = sorted(generators)
+    generators = sorted(generators)   #cela FONCTIONNE
     G = []
     g = generators[1]
     for qi in range(0, q):
-        G.append(pow(g, qi, p))
+        G.append(pow(g, qi, p)) #mod q ou mod p ?
+    G = sorted(G)
     print(G)
     return G, g
 
@@ -37,16 +38,13 @@ def Sign(message, issue, publicKeys, user, G, g):
     sigma = [None] * n
     hashed = miscellaneous.Hash(issue, publicKeys, g, p, q) #ok
 
-    sigma[i] = pow(hashed, user.x, q) #mod q ?
+    sigma[i] = pow(hashed, user.x, p) #mod q ?
 
     ####  etape 2  ####
 
     A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message) #ok aussi
 
     A_1 = pow(pow(sigma[i] * pow(A_0, p-2 , p), 1, p), pow(i, p-2 , p), p)
-    #A_1 = pow(A_0, q-1, p)
-
-    print(A_1)
 
     ####  etape 3  ####
 
@@ -88,12 +86,11 @@ def Sign(message, issue, publicKeys, user, G, g):
 def Verify(issue, publicKeys, message, signature, G, g, userArray):
     A_1, c, z = signature
     n = len(publicKeys)
-
     ## etape 1 ##
-
-    if(g not in G or A_1 not in G):
+    if(g not in G):
         return False
-
+    if(A_1 not in G):
+        return False
     Zq = list(range(0, q-1))  #Liste des Z/Zq
 
     for i in range(0, n):

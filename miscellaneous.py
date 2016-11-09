@@ -10,7 +10,7 @@ def Hash(issue, publicKeys, g, p, q):
         s = s + str(keys['g']) + str(keys['y']) + str(keys['G'])
     binary = ''.join(format(ord(x), 'b') for x in s)
     hashed = int(hashlib.sha1(binary.encode()).hexdigest(), 16)
-    hashed = pow(g, hashed%(q-1), p)
+    hashed = pow(g, hashed%q, p)
     return hashed
 
 def HashPrime(issue, publicKeys, g, p, q, m):
