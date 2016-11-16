@@ -33,7 +33,7 @@ def HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b):
         s = s + str(n)
     binary = ''.join(format(ord(x), 'b') for x in s)
     hashed = int(hashlib.sha1(binary.encode()).hexdigest(), 16)
-    hashed = divmod(hashed, q)[1]
+    hashed = pow(hashed, 1, q)
     return hashed
 
 def findCoprimeList(n):

@@ -2,7 +2,7 @@ import miscellaneous
 import Ring
 from random import randint
 
-q = 11     #Sophie Germain prime number
+q = 29      #Sophie Germain prime number
 p = 2*q+1   #prime too
 
 def buildG():
@@ -22,10 +22,10 @@ def buildG():
     generators = sorted(generators)   #cela FONCTIONNE
     G = []
     g = generators[1]
+    g = g*g
     for qi in range(0, q):
         G.append(pow(g, qi, p)) #mod q ou mod p ?
     G = sorted(G)
-    print(G)
     return G, g
 
 def Sign(message, issue, publicKeys, user, G, g):
@@ -37,20 +37,18 @@ def Sign(message, issue, publicKeys, user, G, g):
 
     sigma = [None] * n
     hashed = miscellaneous.Hash(issue, publicKeys, g, p, q) #ok
-
     sigma[i] = pow(hashed, user.x, p) #mod q ?
 
     ####  etape 2  ####
 
     A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message) #ok aussi
-
     A_1 = pow(pow(sigma[i] * pow(A_0, p-2 , p), 1, p), pow(i, p-2 , p), p)
 
     ####  etape 3  ####
 
     for j in range(0, n):
         if(j != i):
-            sigma[j] = A_0 * pow(A_1, j)
+            sigma[j] = pow(A_0 * pow(A_1, j, p), 1, p)
 
     #### etape 4  ####
     ## a ##
@@ -62,22 +60,25 @@ def Sign(message, issue, publicKeys, user, G, g):
     ## b ##
     z, c = [None]*n, [None]*n
     for j in range(0, n):
-        if(j != id):
+        if(j != i):
             z[j] = randint(0, q-1)
             c[j] = randint(0, q-1)
-            a[j] = divmod(pow(g, z[j], p) * pow(user.y, c[j], p), p)[1]
-            b[j] = divmod(pow(hashed, z[j], p) * pow(int(sigma[j]), c[j], p), p)[1] #enlever le int(sigma) quand pb resolu
-
+            a[j] = pow(pow(g, z[j], p) * pow(user.y, c[j], p), 1,  p)
+            b[j] = pow(pow(hashed, z[j], p) * pow(sigma[j], c[j], p), 1, p)
     ## c ##
     c_solo = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
 
     ## d ##
     sum = 0
     for j in range(0, n):
-        if(j != user.id):
+        if(j != i):
             sum = sum + c[j]
-    c[i] = (c_solo - sum)%q
-    z[i] = (w_i - c[i]*user.x)%q
+    sum = pow(sum, 1, q)
+
+    c[i] = pow(c_solo - sum, 1, q)
+    z[i] = pow(w_i - c[i]*user.x, 1, q)
+
+    print(a, b)
 
     return [A_1, c, z]
 
@@ -89,35 +90,41 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
     ## etape 1 ##
     if(g not in G):
         return False
+
     if(A_1 not in G):
         return False
-    Zq = list(range(0, q-1))  #Liste des Z/Zq
-
+    #pour tout nombre entier x, si x^q%p == 1 alors x appartient à G <- a verifier
+    #regarder les livres crypto
+    Zq = list(range(0, q))  #Liste des Z/Zq
     for i in range(0, n):
-        if(c[i] not in Zq or z[i] not in Zq):
+        if(c[i] not in Zq):
+            return False
+        if(z[i] not in Zq):
             return False
         if(userArray[i].y not in G):
             return False
-
     hashed = miscellaneous.Hash(issue, publicKeys, g, p, q)
+
     A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message)
     sigma = [None]*n
     for i in range(0, n):
-        sigma[i] = A_0*pow(A_1, i)
-
+        sigma[i] = pow(A_0*pow(A_1, i, p), 1, p)
     ## etape 2 ##
 
     a, b = [None]*n, [None]*n
     for i in range(0, n):
-        a[i] = pow(g, z[i]) * pow(userArray[i].y, c[i])
-        b[i] = pow(hashed, z[i]) * pow(sigma[i], c[i])
+        a[i] = pow(pow(g, z[i], p) * pow(userArray[i].y, c[i], p), 1, p)
+        b[i] = pow(pow(hashed, z[i], p) * pow(sigma[i], c[i], p), 1, p)
 
     ## etape 3 ##
-
     sum = 0
     for i in range(0, n):
         sum = sum + c[i]
-    if(abs(miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b) - sum)%q != 0):
+    Hpp = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
+
+    print(a, b)
+
+    if(pow(Hpp, 1, q) != pow(sum, 1, q)):
         return False
 
     ## etape 4 ##
