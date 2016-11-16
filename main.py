@@ -66,7 +66,7 @@ def Sign(message, issue, publicKeys, user, G, g, userArray):
             a[j] = pow(pow(g, z[j], p) * pow(userArray[j].y, c[j], p), 1,  p)
             b[j] = pow(pow(hashed, z[j], p) * pow(sigma[j], c[j], p), 1, p)
     ## c ##
-    c_solo = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
+    c_solo = miscellaneous.HashPrimePrime(issue, message, publicKeys, g, p, q, A_0, A_1, a, b)
 
     ## d ##
     sum = 0
@@ -120,7 +120,7 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
     sum = 0
     for i in range(0, n):
         sum = sum + c[i]
-    Hpp = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
+    Hpp = miscellaneous.HashPrimePrime(issue, message, publicKeys, g, p, q, A_0, A_1, a, b)
 
 
 
