@@ -28,7 +28,7 @@ def buildG():
     G = sorted(G)
     return G, g
 
-def Sign(message, issue, publicKeys, user, G, g):
+def Sign(message, issue, publicKeys, user, G, g, userArray):
 
     n = len(publicKeys)
     i = user.id
@@ -42,14 +42,14 @@ def Sign(message, issue, publicKeys, user, G, g):
     ####  etape 2  ####
 
     A_0 = miscellaneous.HashPrime(issue, publicKeys, g, p, q, message) #ok aussi
-    A_1 = pow(pow(sigma[i] * pow(A_0, p-2 , p), 1, p), pow(i, p-2 , p), p)
+    A_1 = pow(pow(sigma[i] * pow(A_0, p-2 , p), 1, p), pow(i, q-2 , q), p)
 
     ####  etape 3  ####
 
     for j in range(0, n):
         if(j != i):
             sigma[j] = pow(A_0 * pow(A_1, j, p), 1, p)
-
+    print(sigma)
     #### etape 4  ####
     ## a ##
     w_i = randint(0, q-1)
@@ -63,7 +63,7 @@ def Sign(message, issue, publicKeys, user, G, g):
         if(j != i):
             z[j] = randint(0, q-1)
             c[j] = randint(0, q-1)
-            a[j] = pow(pow(g, z[j], p) * pow(user.y, c[j], p), 1,  p)
+            a[j] = pow(pow(g, z[j], p) * pow(userArray[j].y, c[j], p), 1,  p)
             b[j] = pow(pow(hashed, z[j], p) * pow(sigma[j], c[j], p), 1, p)
     ## c ##
     c_solo = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
@@ -78,7 +78,7 @@ def Sign(message, issue, publicKeys, user, G, g):
     c[i] = pow(c_solo - sum, 1, q)
     z[i] = pow(w_i - c[i]*user.x, 1, q)
 
-    print(a, b)
+
 
     return [A_1, c, z]
 
@@ -110,7 +110,7 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
     for i in range(0, n):
         sigma[i] = pow(A_0*pow(A_1, i, p), 1, p)
     ## etape 2 ##
-
+    print(sigma)
     a, b = [None]*n, [None]*n
     for i in range(0, n):
         a[i] = pow(pow(g, z[i], p) * pow(userArray[i].y, c[i], p), 1, p)
@@ -122,7 +122,7 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
         sum = sum + c[i]
     Hpp = miscellaneous.HashPrimePrime(issue, publicKeys, g, p, q, A_0, A_1, a, b)
 
-    print(a, b)
+
 
     if(pow(Hpp, 1, q) != pow(sum, 1, q)):
         return False
@@ -175,7 +175,7 @@ def main():
     G, g = buildG()
     ring, userArray = Ring.myCreateRing(userNumber, g, G, q)
 
-    signature = Sign(message, issue, ring.pKeys, userArray[id], G, g)
+    signature = Sign(message, issue, ring.pKeys, userArray[id], G, g, userArray)
 
     print(Verify(issue, ring.pKeys, message, signature, G, g, userArray))
 
