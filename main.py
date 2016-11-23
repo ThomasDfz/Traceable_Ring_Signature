@@ -1,8 +1,9 @@
 import miscellaneous
+import timeit
 import Ring
 from random import randint
 
-q = 29      #Sophie Germain prime number
+q = 11      #Sophie Germain prime number
 p = 2*q+1   #prime too
 
 def buildG():
@@ -49,7 +50,6 @@ def Sign(message, issue, publicKeys, user, G, g, userArray):
     for j in range(0, n):
         if(j != i):
             sigma[j] = pow(A_0 * pow(A_1, j, p), 1, p)
-    print(sigma)
     #### etape 4  ####
     ## a ##
     w_i = randint(0, q-1)
@@ -77,8 +77,6 @@ def Sign(message, issue, publicKeys, user, G, g, userArray):
 
     c[i] = pow(c_solo - sum, 1, q)
     z[i] = pow(w_i - c[i]*user.x, 1, q)
-
-
 
     return [A_1, c, z]
 
@@ -109,8 +107,8 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
     sigma = [None]*n
     for i in range(0, n):
         sigma[i] = pow(A_0*pow(A_1, i, p), 1, p)
+
     ## etape 2 ##
-    print(sigma)
     a, b = [None]*n, [None]*n
     for i in range(0, n):
         a[i] = pow(pow(g, z[i], p) * pow(userArray[i].y, c[i], p), 1, p)
@@ -121,8 +119,6 @@ def Verify(issue, publicKeys, message, signature, G, g, userArray):
     for i in range(0, n):
         sum = sum + c[i]
     Hpp = miscellaneous.HashPrimePrime(issue, message, publicKeys, g, p, q, A_0, A_1, a, b)
-
-
 
     if(pow(Hpp, 1, q) != pow(sum, 1, q)):
         return False
@@ -143,8 +139,8 @@ def Trace(issue, publicKeys, g, G, message, signature, messageb, signatureb):
     sigma = [None] * n
     sigmab = [None] * n
     for i in range(0, n):
-        sigma[i] = pow(A_0 * pow(A_1, i), 1, p)
-        sigmab[i] = pow(A_0b * pow(A_1b, i), 1, p)
+        sigma[i] = pow(A_0 * pow(A_1, i, p), 1, p)
+        sigmab[i] = pow(A_0b * pow(A_1b, i, p), 1, p)
 
     ## etape 2 ##
 
@@ -163,22 +159,54 @@ def Trace(issue, publicKeys, g, G, message, signature, messageb, signatureb):
         return "indep"
 
 
-
-
 def main():
     ######## test ########
+
     message = "all your base are belong to us"
+    message2 = "je vote deux fois !"
+    message3 = "message trois"
     issue = "sondageID"
     userNumber = 6
     id = 2
+    id2 = 3
 
-    G, g = buildG()
-    ring, userArray = Ring.myCreateRing(userNumber, g, G, q)
+    errorCount = 0
+    doubleErrorCount = 0
+    listeDesFaux =  []
+    listeDesVrai = []
 
-    signature = Sign(message, issue, ring.pKeys, userArray[id], G, g, userArray)
+    #500 tests
+    for i in range (0, 500):
 
-    print(Verify(issue, ring.pKeys, message, signature, G, g, userArray))
+        G, g = buildG()
+        ring, userArray = Ring.myCreateRing(userNumber, g, G, q)
 
+        #On signe 3 messages différents par la même personne.
+        signature =  Sign(message,  issue, ring.pKeys, userArray[id], G, g, userArray)
+        signature2 = Sign(message2, issue, ring.pKeys, userArray[id], G, g, userArray)
+        signature3 = Sign(message3, issue, ring.pKeys, userArray[id], G, g, userArray)
 
+        #Si trace ne fonctionne pas correctement
+        if(Trace(issue, ring.pKeys, g, G, message, signature, message2, signature2) == "linked"):
+            listedesy = [userArray[0].y, userArray[1].y, userArray[2].y, userArray[3].y, userArray[4].y, userArray[5].y]
+            listeDesFaux.append(sorted(listedesy))
+            errorCount = errorCount +1
+            if(Trace(issue, ring.pKeys, g, G, message, signature, message3, signature3) == "linked"):
+                doubleErrorCount = doubleErrorCount+1
+
+        #juste pour garder un vingtième des cas où ça a fonctionné, pour comparer
+        if(randint(0, 20) == 0):
+            listedesy = [userArray[0].y, userArray[1].y, userArray[2].y, userArray[3].y, userArray[4].y, userArray[5].y]
+            listeDesVrai.append(sorted(listedesy))
+
+    #On peut comparer les Y des 6 personnes pour les cas qui ont fonctionnés, et les cas où ça n'a pas fonctionné.
+    print("liste des y pour lesquels ça n'a pas marché : {}".format(listeDesFaux))
+    print("___________")
+    print("liste des y pour lesquels ça a  marché      : {}".format(listeDesVrai))
+
+    #Nombre d'erreurs = environ nb_test/q
+    print(errorCount)
+    #environ nb_tests/q²
+    print(doubleErrorCount)
 
 main()
