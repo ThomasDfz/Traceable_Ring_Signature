@@ -1,8 +1,6 @@
 from math import gcd
-from crypto import *
 import hashlib
 
-#def createTag(issue, publicKeys):
 
 def Hash(issue, publicKeys, g, p, q):
     s = issue
@@ -36,44 +34,6 @@ def HashPrimePrime(issue, message,  publicKeys, g, p, q, A_0, A_1, a, b):
     hashed = int(hashlib.sha1(binary.encode()).hexdigest(), 16)
     hashed = pow(hashed, 1, q)
     return hashed
-
-def Hashe(issue, publicKeys, g, p, q):
-    stringKey = ''
-    for keys in publicKeys:
-        stringKey = stringKey + str(keys['y']) + '|'
-    stringKey = stringKey[:-1]
-    s = issue + stringKey
-    m = hashlib.sha1()
-    m.update(s.encode())
-    k = int(m.hexdigest(), 16)
-    return pow(g, pow(k, 1, q), p)
-
-def HashePrime(issue, publicKeys, g, p, q, message):
-    stringKey = ''
-    for keys in publicKeys:
-        stringKey = stringKey + str(keys['y']) + '|'
-    stringKey = stringKey[:-1]
-    s = issue + stringKey + message
-    m = hashlib.sha1()
-    m.update(s.encode())
-    k = int(m.hexdigest(), 16)
-    return pow(g, pow(k, 1, q), p)
-
-def HashePrimePrime(issue, publicKeys, g, p, q, message, A_0, A_1, a, b):
-    stringKey = ''
-    for keys in publicKeys:
-        stringKey = stringKey + str(keys['y']) + '|'
-    stringKey = stringKey[:-1]
-    s = issue + stringKey + message + str(A_0) + str(A_1)
-    for x in a:
-        s = s + str(x)
-    for x in b:
-        s = s + str(x)
-    m = hashlib.sha1()
-    m.update(s.encode())
-    k = int(m.hexdigest(), 16)
-    return pow(g, pow(k, 1, q-1), p)
-
 
 def findCoprimeList(n):
     coprimeList = []

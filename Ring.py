@@ -9,7 +9,7 @@ class myRing:
 class myUser:
     def __init__(self, id, g, G, q):
         self.x = randint(0, q-1)
-        self.y = pow(g, self.x, 2*q+1) #mod p ou q  ? ne change rien
+        self.y = pow(g, self.x, 2*q+1)
         self.Pkeys = {'g':g , 'y':self.y, 'G':G}
         self.Skeys = {'Pkey':self.Pkeys, 'x':self.x}
         self.id =id
